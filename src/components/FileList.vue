@@ -197,12 +197,16 @@ export default {
 
         const data = await response.json();
         if (Array.isArray(data)) {
-          files.value = data.map(file => ({
-            ...file,
-            username: file.user || '未知用户',
-            category_name: file.category_name || '无分类',
-            url: file.url.trim().replace(/[`\s]/g, '') // 增强正则表达式，同时移除反引号和空格
-          }));
+          files.value = data.map(file => {
+            // 查找分类名称 - 修改为按名称匹配
+            const category = categories.value.find(cat => cat.name === file.category);
+            return {
+              ...file,
+              username: file.user || '未知用户',
+              category_name: category ? category.name : '无分类',
+              url: file.url.trim().replace(/[`\s]/g, '')
+            };
+          });
         } else {
           console.error('后端返回数据格式不正确，期望数组');
           files.value = [];

@@ -23,10 +23,10 @@ const authService = {
       });
       
       // 验证权限信息是否存在
-      if (!userRes.data.permissions) {
+      if (userRes.data.permission_count === undefined) {
         console.warn('用户权限信息不存在，可能是后端API未返回');
-        // 确保permissions字段存在，避免显示undefined
-        userRes.data.permissions = [];
+        // 确保permission_count字段存在，避免显示undefined
+        userRes.data.permission_count = 0;
       }
       
       return { ...response, userInfo: userRes.data };

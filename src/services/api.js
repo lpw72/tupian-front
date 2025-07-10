@@ -34,6 +34,7 @@ const apiService = {
   },
   getUsers: () => axios.get(`${API_URL}users/`),
   getUser: (id) => axios.get(`${API_URL}users/${id}/`),
+  getCurrentUser: () => axios.get(`${API_URL}users/me/`),
   updateUser: (id, data) => axios.put(`${API_URL}users/${id}/`, data),
   deleteUser: (id) => axios.delete(`${API_URL}users/${id}/`),
   getCategories: () => axios.get(`${API_URL}categories/`),

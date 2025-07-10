@@ -22,7 +22,7 @@
           <a-descriptions-item label="用户名">{{ user?.username }}</a-descriptions-item>
           <a-descriptions-item label="邮箱">{{ user?.email }}</a-descriptions-item>
           <a-descriptions-item label="角色">{{ user?.role || '普通用户' }}</a-descriptions-item>
-          <a-descriptions-item label="权限数量">{{ user?.permissions?.length || 0 }}</a-descriptions-item>
+          <a-descriptions-item label="权限数量">{{ user?.permission_count || 0 }}</a-descriptions-item>
         </a-descriptions>
         <a-button type="primary" @click="handleLogout" style="margin-top: 16px;">退出登录</a-button>
       </a-card>
@@ -32,19 +32,19 @@
         <a-row :gutter="[16, 16]">
           <a-col :span="8">
             <a-card @click="goTo('/file-library')" class="link-card">
-              <a-icon type="file" theme="twoTone" />
+              <FileOutlined />
               <p>文件库</p>
             </a-card>
           </a-col>
           <a-col :span="8">
             <a-card @click="goTo('/my-resources')" class="link-card">
-              <a-icon type="cloud-upload" theme="twoTone" />
+              <CloudUploadOutlined />
               <p>我的资源</p>
             </a-card>
           </a-col>
           <a-col :span="8">
             <a-card @click="goTo('/profile')" class="link-card">
-              <a-icon type="user" theme="twoTone" />
+              <UserOutlined />
               <p>个人信息</p>
             </a-card>
           </a-col>
@@ -58,7 +58,9 @@
 import { computed } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import { Card, Row, Col, Descriptions, Button, Icon } from 'ant-design-vue';
+// 修改导入部分
+import { Card, Row, Col, Descriptions, Button } from 'ant-design-vue';
+import { FileOutlined, CloudUploadOutlined, UserOutlined } from '@ant-design/icons-vue';
 
 export default {
   components: {
@@ -68,7 +70,7 @@ export default {
     ADescriptions: Descriptions,
     ADescriptionsItem: Descriptions.Item,
     AButton: Button,
-    AIcon: Icon
+    FileOutlined, CloudUploadOutlined, UserOutlined
   },
   setup() {
     const store = useStore();

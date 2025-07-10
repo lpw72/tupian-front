@@ -8,10 +8,12 @@
       row-key="id"
       pagination
     >
-      <!-- 直接针对 action 列定义插槽，无需 column 判断 -->
-      <template #bodyCell(action)="{ record }">
-        <a-button type="primary" size="small" style="margin-right: 8px" @click="handleEdit(record)">编辑</a-button>
-        <a-button danger size="small" @click="handleDelete(record)">删除</a-button>
+      <!-- 修改插槽语法，与FileList.vue保持一致 -->
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'action'">
+          <a-button type="primary" size="small" style="margin-right: 8px" @click="handleEdit(record)">编辑</a-button>
+          <a-button danger size="small" @click="handleDelete(record)">删除</a-button>
+        </template>
       </template>
     </a-table>
 
@@ -36,6 +38,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+// Remove unused Button import
 import { message, Modal } from 'ant-design-vue';
 import { API_URL } from '../services/api';
 
@@ -52,7 +55,11 @@ const columns = [
   { title: '邮箱', dataIndex: 'email', key: 'email' },
   { title: '手机号', dataIndex: 'phone_number', key: 'phone_number' },
   { title: '角色', dataIndex: 'role', key: 'role' },
-  { title: '操作', key: 'action' }
+  { 
+    title: '操作', 
+    key: 'action',
+    // 移除scopedSlots配置，使用通用bodyCell插槽判断
+  }
 ];
 
 // 获取用户列表数据

@@ -39,10 +39,11 @@ export default {
   setup() {
     const store = useStore();
     const route = useRoute();
-    // 假设 user.permissions 是权限数组
+    // 修改权限判断逻辑，基于角色而非权限列表
     const showAdminMenu = computed(() => {
       const user = store.state.user;
-      return user && user.permissions && user.permissions.includes('delete_user');
+      // 直接检查用户角色是否为管理员
+      return user && user.role === '管理员';
     });
     const selectedKey = computed(() => route.name || 'profile');
     return { showAdminMenu, selectedKey };

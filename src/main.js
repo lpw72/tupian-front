@@ -6,12 +6,14 @@ import store from './store';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import Antd from 'ant-design-vue';
+import { Button } from 'ant-design-vue';
 // 修复Ant Design Vue的CSS导入路径
 import 'ant-design-vue/dist/reset.css';
 
 // 正确创建并配置应用实例
 const app = createApp(App);
 app.use(store);
+app.use(Button);
 app.use(router);
 app.use(ElementPlus);
 app.use(Antd);
