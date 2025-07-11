@@ -33,7 +33,7 @@
 
     <!-- 修改密码弹窗 -->
     <a-modal v-model:open="showModal" title="修改密码" @ok="handleChangePassword" @cancel="handleCancel">
-      <a-form :model="passwordForm">
+      <a-form :model="passwordForm" ref="passwordFormRef">
         <a-form-item label="原密码" name="old_password" :rules="[{ required: true, message: '请输入原密码!' }]">
           <a-input-password v-model:value="passwordForm.old_password" autocomplete="current-password" />
         </a-form-item>

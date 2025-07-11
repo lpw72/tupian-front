@@ -3,7 +3,7 @@
     <a-layout-header style="background: #001529; padding: 0 24px;">
       <a-menu mode="horizontal" theme="dark" style="line-height: 64px;">
         <a-menu-item key="home">
-          <router-link to="/">首页</router-link>
+          <router-link to="/login">图片管理系统</router-link>
         </a-menu-item>
       </a-menu>
     </a-layout-header>
