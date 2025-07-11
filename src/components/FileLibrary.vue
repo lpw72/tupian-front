@@ -17,23 +17,50 @@
       >
     </div>
 
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading">
+      <div class="spinner"></div>
+      <p>加载中...</p>
+    </div>
+
+    <!-- 错误提示 -->
+    <div v-if="error" class="error-message">{{ error }}</div>
+
     <!-- 图片网格 -->
-    <div v-if="filteredImages.length" class="image-grid">
+    <div v-else-if="filteredFiles.length" class="file-grid">
       <div 
-        v-for="image in paginatedImages" 
-        :key="image.id" 
-        class="image-card"
+        v-for="file in paginatedFiles" 
+        :key="file.id" 
+        class="file-card"
       >
-        <img 
-          :src="image.url" 
-          :alt="image.description" 
-          class="gallery-image"
-          @click="openLightbox(image)"
-        >
-        <div class="image-info">
-          <div class="description">{{ image.description }}</div>
-          <div class="category">{{ image.category }}</div>
-          <div class="user">上传者: {{ image.user }}</div>
+        <!-- 媒体容器 - 统一图片和视频的容器样式 -->
+        <div class="media-container">
+          <img 
+            v-if="file.type === 'image'"
+            :src="file.url" 
+            :alt="file.description" 
+            class="gallery-media"
+            @click="openLightbox(file)"
+          >
+          <video 
+            v-else-if="file.type === 'video'"
+            :src="file.url" 
+            :alt="file.description" 
+            class="gallery-media"
+            @click="openLightbox(file)"
+            poster
+          >
+          </video>
+          <div v-if="file.type === 'video'" class="play-overlay" @click.stop="openLightbox(file)">
+            <div class="play-icon">▶</div>
+          </div>
+          <div class="file-type-badge">{{ file.type === 'image' ? '图片' : '视频' }}</div>
+        </div>
+
+        <div class="file-info">
+          <div class="description">{{ file.description }}</div>
+          <div class="category">{{ file.category }}</div>
+          <div class="user">上传者: {{ file.user }}</div>
         </div>
       </div>
     </div>
@@ -44,7 +71,7 @@
     </div>
 
     <!-- 分页控件 -->
-    <div v-if="totalPages > 1" class="pagination">
+    <div v-if="!loading && !error && totalPages > 1" class="pagination">
       <button 
         :disabled="currentPage === 1" 
         @click="currentPage--"
@@ -67,11 +94,30 @@
     <!-- 图片预览弹窗 -->
     <div v-if="lightboxVisible" class="lightbox" @click.self="closeLightbox">
       <div class="lightbox-content">
-        <img :src="currentImage.url" :alt="currentImage.description">
+        <!-- 图片预览 -->
+        <img 
+          v-if="currentFile.type === 'image'"
+          :src="currentFile.url" 
+          :alt="currentFile.description"
+          class="lightbox-media"
+        >
+    
+        <!-- 视频预览 -->
+        <video 
+          v-else-if="currentFile.type === 'video'"
+          :src="currentFile.url" 
+          :alt="currentFile.description"
+          class="lightbox-media"
+          controls
+        >
+          您的浏览器不支持视频播放
+        </video>
+    
         <div class="lightbox-info">
-          <h3>{{ currentImage.description }}</h3>
-          <p>分类: {{ currentImage.category }}</p>
-          <p>上传者: {{ currentImage.user }}</p>
+          <h3>{{ currentFile.description }}</h3>
+          <p>类型: {{ currentFile.type === 'image' ? '图片' : '视频' }}</p>
+          <p>分类: {{ currentFile.category }}</p>
+          <p>上传者: {{ currentFile.user }}</p>
           <button @click="closeLightbox">关闭</button>
         </div>
       </div>
@@ -80,98 +126,99 @@
 </template>
 
 <script>
+import apiService from '../services/api';
+
 export default {
   data() {
     return {
-      // 原始图片数据
-      images: [
-        {id: 3, description: '人物2.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/人物2.jpg', user: 'admin', category: '人物'},
-        {id: 4, description: '人物3.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/人物3.jpg', user: 'admin', category: '人物'},
-        {id: 6, description: '人物5.png', url: 'http://syr2tubvx.hn-bkt.clouddn.com/人物5.png', user: 'admin', category: '人物'},
-        {id: 7, description: '人物6.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/人物6.jpg', user: 'admin', category: '人物'},
-        {id: 8, description: '其他1.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/其他1.jpg', user: 'admin', category: '其他'},
-        {id: 9, description: '其他2.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/其他2.jpg', user: 'admin', category: '其他'},
-        {id: 10, description: '其他3.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/其他3.jpg', user: 'admin', category: '其他'},
-        {id: 11, description: '其他4.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/其他4.jpg', user: 'admin', category: '其他'},
-        {id: 12, description: '文字1.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/文字1.jpg', user: 'admin', category: '文字'},
-        {id: 13, description: '文字2.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/文字2.jpg', user: 'admin', category: '文字'},
-        {id: 14, description: '文字3.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/文字3.jpg', user: 'admin', category: '文字'},
-        {id: 15, description: '文字4.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/文字4.jpg', user: 'admin', category: '文字'},
-        {id: 16, description: '文字5.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/文字5.jpg', user: 'admin', category: '文字'},
-        {id: 17, description: '风景1.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/风景1.jpg', user: 'admin', category: '风景'},
-        {id: 18, description: '风景2.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/风景2.jpg', user: 'admin', category: '风景'},
-        {id: 19, description: '风景3.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/风景3.jpg', user: 'admin', category: '风景'},
-        {id: 20, description: '风景4.jpg', url: 'http://syr2tubvx.hn-bkt.clouddn.com/风景4.jpg', user: 'admin', category: '风景'},
-        {id: 21, description: '测试文件', url: 'http://syr2tubvx.hn-bkt.clouddn.com/人物/test.jpg', user: 'admin', category: '其他'},
-        {id: 22, description: '全球', url: 'http://syr2tubvx.hn-bkt.clouddn.com/太阳.jpg', user: 'admin', category: '风景'},
-        {id: 23, description: '呃呃7', url: 'http://syr2tubvx.hn-bkt.clouddn.com/太阳.jpg', user: '李四', category: '其他'},
-        {id: 24, description: '呃呃', url: 'http://syr2tubvx.hn-bkt.clouddn.com/0317b2856a0b5e50000017d8957ac7a.jpg@260w_195h_1c_1e_1o_100sh.jpg', user: '李四', category: '风景'}
-      ],
-      selectedCategory: 'all', // 当前选中的分类
-      searchQuery: '',          // 搜索关键词
-      currentPage: 1,           // 当前页码
-      pageSize: 9,              // 每页显示数量
-      lightboxVisible: false,   // 是否显示大图预览
-      currentImage: null        // 当前预览的图片
+      files: [], // 重命名为更通用的files数组
+      selectedCategory: 'all',
+      searchQuery: '',
+      currentPage: 1,
+      pageSize: 12,
+      lightboxVisible: false,
+      currentFile: null, // 重命名为currentFile
+      loading: true,
+      error: null
     };
   },
   computed: {
-    // 提取唯一分类列表
     uniqueCategories() {
-      return [...new Set(this.images.map(img => img.category))];
+      return [...new Set(this.files.map(file => file.category))];
     },
     
-    // 过滤后的图片列表
-    filteredImages() {
-      return this.images.filter(img => {
-        // 分类过滤
+    filteredFiles() {
+      return this.files.filter(file => {
         const categoryMatch = this.selectedCategory === 'all' || 
-                             img.category === this.selectedCategory;
+                             file.category === this.selectedCategory;
         
-        // 搜索过滤
         const searchMatch = this.searchQuery === '' || 
-                          img.description.toLowerCase().includes(this.searchQuery.toLowerCase());
+                           file.description.toLowerCase().includes(this.searchQuery.toLowerCase());
         
         return categoryMatch && searchMatch;
       });
     },
     
-    // 分页后的图片列表
-    paginatedImages() {
+    paginatedFiles() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.filteredImages.slice(start, end);
+      return this.filteredFiles.slice(start, end);
     },
     
-    // 总页数
     totalPages() {
-      return Math.ceil(this.filteredImages.length / this.pageSize);
+      return Math.ceil(this.filteredFiles.length / this.pageSize);
     }
   },
   methods: {
-    // 当筛选条件变化时重置页码
     filterImages() {
       this.currentPage = 1;
     },
     
-    // 打开图片预览
-    openLightbox(image) {
-      this.currentImage = image;
+    openLightbox(file) {
+      this.currentFile = file; // Fixed: changed from currentImage to currentFile
       this.lightboxVisible = true;
-      document.body.style.overflow = 'hidden'; // 禁止背景滚动
+      document.body.style.overflow = 'hidden';
     },
     
-    // 关闭图片预览
     closeLightbox() {
       this.lightboxVisible = false;
-      document.body.style.overflow = ''; // 恢复背景滚动
+      document.body.style.overflow = '';
+    },
+    
+    // 新增：从API获取图片数据
+    async fetchImages() {
+      try {
+        this.loading = true;
+        const response = await apiService.getFiles();
+        // 处理文件数据，添加类型判断
+        this.files = (response.data.results || response.data).map(file => {
+          // 根据URL扩展名判断文件类型
+          const ext = file.url.split('.').pop().toLowerCase();
+          const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'];
+          return {
+            ...file,
+            type: videoExtensions.includes(ext) ? 'video' : 'image'
+          };
+        });
+        this.error = null;
+      } catch (err) {
+        console.error('获取图片失败:', err);
+        // 显示详细错误信息
+        this.error = `获取图片列表失败: ${err.response?.data?.detail || err.message}`;
+        this.images = [];
+      } finally {
+        this.loading = false;
+      }
     }
   },
   watch: {
-    // 当前页变化时滚动到顶部
     currentPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  },
+  // 组件创建时获取数据
+  created() {
+    this.fetchImages();
   }
 };
 </script>
@@ -206,6 +253,101 @@ export default {
   gap: 20px;
 }
 
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.media-container {
+  position: relative;
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.gallery-media {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
+/* 响应式调整 */
+@media (max-width: 1024px) {
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+}
+
+.media-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+.gallery-image, .gallery-video {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  border-bottom: none;
+}
+
+/* 视频播放覆盖层 */
+.play-overlay {
+  position: absolute;
+  top: 0;
+  left: ;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0 , 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.play-icon {
+  color: white;
+  font-size: 40px;
+}
+
+/* 文件类型标签 */
+.file-type-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+/* 预览弹窗媒体样式 */
+.lightbox-media {
+  max-height: 80vh;
+  max-width: 70%;
+  object-fit: contain;
+}
 .image-card {
   border-radius: 8px;
   overflow: hidden;
@@ -347,5 +489,39 @@ export default {
   padding: 40px;
   font-size: 18px;
   color: #666;
+}
+
+/* 添加加载状态样式 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #42b983;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 错误提示样式 */
+.error-message {
+  color: #ff4444;
+  text-align: center;
+  padding: 20px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  margin-bottom: 20px;
 }
 </style>

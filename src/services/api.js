@@ -4,15 +4,39 @@ const API_URL = 'http://localhost:8000/api/';
 
 // 添加 axios 请求拦截器，自动加 token
 axios.interceptors.request.use(config => {
-  // 排除登录和注册请求
-  if (!config.url.includes('login') && !config.url.includes('register')) {
+  // 排除登录、注册和文件请求
+  if (!config.url.includes('login') && !config.url.includes('register') && !config.url.includes('files')) {
     const token = localStorage.getItem('access');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+  } else if (config.url.includes('files')) {
+    // 显式删除文件请求的Authorization头
+    delete config.headers.Authorization;
   }
   return config;
 });
+
+// 添加响应拦截器处理401错误
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    // 处理401错误 - 排除文件请求
+    if (error.response && error.response.status === 401 && !error.config.url.includes('files')) {
+      // 清除过期的token
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
+      
+      // 如果不是登录页面则重定向到登录页
+      if (!window.location.pathname.includes('/login')) {
+        // 保存当前URL用于登录后返回
+        localStorage.setItem('redirectPath', window.location.pathname);
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 const apiService = {
   register: (data) => axios.post(`${API_URL}users/register/`, data),
