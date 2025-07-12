@@ -1,18 +1,49 @@
 <template>
   <div class="user-profile">
     <a-card class="user-info-card" title="个人信息">
-      <a-descriptions :column="1">
-        <a-descriptions-item label="用户名">{{ user?.username || '未登录' }}</a-descriptions-item>
-        <a-descriptions-item label="邮箱">{{ user?.email || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="手机号">{{ user?.phone_number || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="角色">{{ user?.role || '普通用户' }}</a-descriptions-item>
-        <a-descriptions-item label="权限数量">{{ user?.permission_count || 0 }}</a-descriptions-item>
+      <div class="profile-header">
+        <div class="avatar-container">
+          <a-avatar shape="circle" size="large" :src="user?.avatar || defaultAvatar">
+            <template #icon><UserOutlined /></template>
+          </a-avatar>
+        </div>
+        <div class="user-basic-info">
+          <h2>{{ user?.username || '未登录' }}</h2>
+          <p class="user-role">{{ user?.role || '普通用户' }}</p>
+        </div>
+      </div>
+      <a-descriptions :column="1" class="user-details">
+        <a-descriptions-item label="用户名" class="info-item">
+          <span class="info-icon"><UserOutlined /></span>
+          {{ user?.username || '未登录' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="邮箱" class="info-item">
+          <span class="info-icon"><MailOutlined /></span>
+          {{ user?.email || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="手机号" class="info-item">
+          <span class="info-icon"><PhoneOutlined /></span>
+          {{ user?.phone_number || '-' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="角色" class="info-item">
+          <span class="info-icon"><TeamOutlined /></span>
+          {{ user?.role || '普通用户' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="权限数量" class="info-item">
+          <span class="info-icon"><LockOutlined /></span>
+          {{ user?.permission_count || 0 }}
+        </a-descriptions-item>
       </a-descriptions>
       <div class="action-buttons">
-        <!-- 添加编辑信息按钮 -->
-        <a-button type="primary" @click="showEditModal = true" style="margin-right: 16px;">编辑信息</a-button>
-        <a-button type="primary" @click="showModal = true" style="margin-right: 16px;">修改密码</a-button>
-        <a-button danger @click="handleLogout">退出登录</a-button>
+        <a-button type="primary" shape="round" @click="showEditModal = true" class="action-btn edit-btn">
+          <EditOutlined /> 编辑信息
+        </a-button>
+        <a-button type="primary" shape="round" @click="showModal = true" class="action-btn password-btn">
+          <LockOutlined /> 修改密码
+        </a-button>
+        <a-button danger shape="round" @click="handleLogout" class="action-btn logout-btn">
+          <LogoutOutlined /> 退出登录
+        </a-button>
       </div>
     </a-card>
 
@@ -227,15 +258,87 @@ export default {
 <style scoped>
 .user-profile {
   padding: 24px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 }
 
 .user-info-card {
-  max-width: 600px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 24px;
+}
+
+.avatar-container {
+  margin-right: 24px;
+}
+
+.user-basic-info {
+  flex: 1;
+}
+
+.user-basic-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.user-role {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.user-details .info-item {
+  padding: 12px 0;
+  border-bottom: 1px dashed #f0f0f0;
+}
+
+.user-details .info-item:last-child {
+  border-bottom: none;
+}
+
+.info-icon {
+  margin-right: 8px;
+  color: #1890ff;
 }
 
 .action-buttons {
   margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.action-btn {
+  transition: all 0.3s ease;
+}
+
+.edit-btn:hover {
+  background-color: #096dd9;
+}
+
+.password-btn {
+  background-color: #faad14;
+  border-color: #faad14;
+}
+
+.password-btn:hover {
+  background-color: #d48806;
+  border-color: #d48806;
+}
+
+.logout-btn:hover {
+  background-color: #cf1322;
 }
 </style>

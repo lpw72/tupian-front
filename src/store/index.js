@@ -9,6 +9,9 @@ export default createStore({
     user: null,
   },
   mutations: {
+    updateUser(state, userData) {
+      state.user = userData;
+    },
     SET_TOKEN(state, token) {
       state.token = token;
       localStorage.setItem('token', token);

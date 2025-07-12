@@ -176,9 +176,13 @@ export default {
         }
 
         let url = 'http://localhost:8000/api/files/';
+        const params = new URLSearchParams();
+        // 添加管理员参数，确保获取所有文件
+        params.append('admin', 'true');
         if (keyword) {
-          url += `?search=${encodeURIComponent(keyword)}`;
+          params.append('search', encodeURIComponent(keyword));
         }
+        url += `?${params.toString()}`;
 
         const response = await fetch(url, {
           method: 'GET',
