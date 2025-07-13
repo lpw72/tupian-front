@@ -81,17 +81,17 @@ export default {
     UploadOutlined
   },
   setup() {
-    const files = ref([]);
-    const previewVisible = ref(false);
-    const previewUrl = ref('');
-    const modalVisible = ref(false);
-    const modalTitle = ref('新增文件');
-    const formData = ref({ description: '', category: '' });
-    const formRef = ref(null);
-    const isAddModal = ref(true);
-    const searchKeyword = ref('');
-    const categories = ref([]);
-    const selectedFile = ref(null);
+    const files = ref([]); // 存储所有文件的数据
+    const previewVisible = ref(false); // 控制图片预览弹窗是否可见
+    const previewUrl = ref(''); // 预览图片的URL
+    const modalVisible = ref(false); // 控制添加/编辑文件模态框是否可见
+    const modalTitle = ref('新增文件'); // 模态框标题
+    const formData = ref({ description: '', category: '' }); // 表单数据
+    const formRef = ref(null); // 表单引用
+    const isAddModal = ref(true); // 是否为添加模式
+    const searchKeyword = ref(''); // 搜索关键词
+    const categories = ref([]); // 分类列表
+    const selectedFile = ref(null); // 当前选中的文件
 
     // 添加表单验证规则
     const formRules = ref({
@@ -103,12 +103,13 @@ export default {
       ]
     });
 
-    // 添加以下onMounted钩子
+    // 组件挂载时获取分类和文件数据
     onMounted(async () => {
       await fetchCategories();
       await fetchFiles();
     });
 
+    // 获取分类数据
     const fetchCategories = async () => {
       try {
         const token = getToken();
@@ -122,7 +123,7 @@ export default {
 
         if (!response.ok) throw new Error('获取分类失败');
         const data = await response.json();
-        // 修复：将分类value设置为ID，同时保存名称用于查找
+        // 将分类value设置为ID，同时保存名称用于查找
         categories.value = data.map(item => ({
           id: item.id,       // 保存分类ID
           name: item.name,   // 保存分类名称
@@ -134,7 +135,7 @@ export default {
       }
     };
 
-
+    // 定义表格列
     const columns = [
       {
         title: 'ID',
@@ -167,6 +168,7 @@ export default {
       },
     ];
 
+    // 获取文件数据
     const fetchFiles = async (keyword = '') => {
       try {
         const token = getToken();
@@ -195,36 +197,30 @@ export default {
         if (!response.ok) {
           if (response.status === 401) {
             console.error('token无效或已过期，请重新登录');
+            // 添加错误提示给用户
+            ElMessage.error('登录已过期，请重新登录');
           }
           throw new Error(`请求失败: ${response.status}`);
         }
 
+        // 处理数据并更新文件列表
         const data = await response.json();
-        if (Array.isArray(data)) {
-          files.value = data.map(file => {
-            // 查找分类名称 - 修改为按名称匹配
-            const category = categories.value.find(cat => cat.name === file.category);
-            return {
-              ...file,
-              username: file.user || '未知用户',
-              category_name: category ? category.name : '无分类',
-              url: file.url.trim().replace(/[`\s]/g, '')
-            };
-          });
-        } else {
-          console.error('后端返回数据格式不正确，期望数组');
-          files.value = [];
+        files.value = data.results || data; // 兼容不同的后端返回格式
+        if (files.value.length === 0) {
+          ElMessage.info('没有找到文件数据');
         }
       } catch (error) {
         console.error('获取文件列表失败:', error);
-        files.value = [];
+        ElMessage.error('获取文件列表失败，请稍后重试');
       }
     };
 
+    // 查看文件
     const viewFile = (record) => {
       window.open(record.url, '_blank');
     };
 
+    // 删除文件
     const deleteFile = async (id) => {
       try {
         const token = getToken();
@@ -240,25 +236,27 @@ export default {
           throw new Error(`删除文件失败: ${response.status}`);
         }
 
-        fetchFiles();
+        fetchFiles(); // 刷新文件列表
       } catch (error) {
         console.error('删除文件失败:', error);
       }
     };
 
+    // 编辑文件
     const editFile = (record) => {
       isAddModal.value = false;
       modalTitle.value = '编辑文件';
       formData.value = { description: record.description, category: record.category };
-      // 修复：设置selectedFile为当前编辑的记录
+      // 设置selectedFile为当前编辑的记录
       selectedFile.value = record;
       modalVisible.value = true;
     };
 
+    // 上传文件到七牛云
     const uploadToQiniu = async (file) => {
       try {
         const filename = file.name;
-        // 修复：使用category_name而非category
+        // 使用category_name而非category
         const tokenResponse = await fetch(`http://localhost:8000/api/files/upload-token/?filename=${filename}&category=${formData.value.category}`, {
           method: 'GET',
           headers: {
@@ -277,7 +275,7 @@ export default {
         uploadFormData.append('key', responseFilename);
         uploadFormData.append('file', file);
     
-        // 关键修复：移除所有headers配置
+        // 移除所有headers配置
         const uploadResponse = await fetch(upload_url, {
           method: 'POST',
           body: uploadFormData
@@ -297,6 +295,7 @@ export default {
       }
     };
 
+    // 保存文件信息到数据库
     const saveFileInfo = async (hash, key) => {
       try {
         const token = getToken();
@@ -317,13 +316,14 @@ export default {
 
         if (!response.ok) throw new Error('保存文件信息失败');
 
-        fetchFiles();
+        fetchFiles(); // 刷新文件列表
       } catch (error) {
         console.error('保存文件信息失败:', error);
         ElMessage.error('保存文件信息失败: ' + error.message); // 添加用户可见错误提示
       }
     };
 
+    // 更新文件信息
     const updateFileInfo = async () => {
       try {
         if (!selectedFile.value || !selectedFile.value.id) {
@@ -346,13 +346,14 @@ export default {
 
         if (!response.ok) throw new Error('更新文件信息失败');
 
-        fetchFiles();
+        fetchFiles(); // 刷新文件列表
       } catch (error) {
         ElMessage.error('更新文件信息失败: ' + error.message);
         console.error('更新文件信息失败:', error);
       }
     };
 
+    // 处理模态框确认事件
     const handleModalOk = async () => {
       if (formRef.value) {
         try {
@@ -376,13 +377,14 @@ export default {
             await updateFileInfo();
           }
           modalVisible.value = false;
-          fetchFiles();
+          fetchFiles(); // 刷新文件列表
         } catch (error) {
           console.error('表单验证失败:', error);
         }
       }
     };
 
+    // 处理模态框取消事件
     const handleModalCancel = () => {
       modalVisible.value = false;
       if (formRef.value) {
@@ -391,17 +393,19 @@ export default {
       selectedFile.value = null;
     };
 
+    // 预览图片
     const previewImage = (url) => {
       previewUrl.value = url;
       previewVisible.value = true;
     };
 
+    // 上传前处理文件
     const beforeUpload = (file) => {
-      selectedFile.value = file;  // 修复：取消注释并添加file参数
+      selectedFile.value = file;  // 取消注释并添加file参数
       return false; // 阻止自动上传
     };
 
-    // 添加文件变更处理函数
+    // 文件变更处理函数
     const handleFileChange = (info) => {
       if (info.file.status === 'done') {
         selectedFile.value = info.file.originFileObj;
@@ -411,23 +415,18 @@ export default {
       }
     };
 
+    // 搜索文件
     const handleSearch = () => {
       fetchFiles(searchKeyword.value);
     };
 
-    // 添加 showAddModal 函数
+    // 显示添加文件模态框
     const showAddModal = () => {
       isAddModal.value = true;
       modalTitle.value = '添加文件';
       formData.value = { description: '', category: '' };
       modalVisible.value = true;
     };
-
-    onMounted(() => {
-      fetchCategories().then(() => {
-        fetchFiles();
-      });
-    });
 
     return {
       files,
@@ -458,6 +457,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 /* 浏览器兼容性修复 */

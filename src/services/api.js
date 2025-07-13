@@ -4,15 +4,12 @@ const API_URL = 'http://localhost:8000/api/';
 
 // 添加 axios 请求拦截器，自动加 token
 axios.interceptors.request.use(config => {
-  // 排除登录、注册和文件请求
-  if (!config.url.includes('login') && !config.url.includes('register') && !config.url.includes('files')) {
+  // 排除登录和注册请求，保留文件请求的认证头
+  if (!config.url.includes('login') && !config.url.includes('register')) {
     const token = localStorage.getItem('access');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-  } else if (config.url.includes('files')) {
-    // 显式删除文件请求的Authorization头
-    delete config.headers.Authorization;
   }
   return config;
 });

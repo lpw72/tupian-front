@@ -29,9 +29,9 @@
           <span class="info-icon"><TeamOutlined /></span>
           {{ user?.role || '普通用户' }}
         </a-descriptions-item>
-        <a-descriptions-item label="权限数量" class="info-item">
+        <a-descriptions-item label="拥有的权限" class="info-item">
           <span class="info-icon"><LockOutlined /></span>
-          {{ user?.permission_count || 0 }}
+          {{ user?.permissions || 0 }}
         </a-descriptions-item>
       </a-descriptions>
       <div class="action-buttons">
@@ -83,6 +83,7 @@
 import { ref, computed, onMounted, getCurrentInstance } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
+// Remove unused icon imports
 
 // 添加API_URL导入
 import { API_URL } from '../services/api';

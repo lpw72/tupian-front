@@ -131,23 +131,25 @@ import apiService from '../services/api';
 export default {
   data() {
     return {
-      files: [], // 重命名为更通用的files数组
-      selectedCategory: 'all',
-      searchQuery: '',
-      currentPage: 1,
-      pageSize: 12,
-      lightboxVisible: false,
-      currentFile: null, // 重命名为currentFile
-      loading: true,
-      error: null
+      files: [], // 存储所有图片和视频文件的数据
+      selectedCategory: 'all', // 当前选中的分类，默认为“全部”
+      searchQuery: '', // 用户输入的搜索关键词
+      currentPage: 1, // 当前页码
+      pageSize: 12, // 每页显示的数量
+      lightboxVisible: false, // 控制预览弹窗是否可见
+      currentFile: null, // 当前正在预览的文件对象
+      loading: true, // 加载状态标志
+      error: null // 错误信息存储
     };
   },
   computed: {
     uniqueCategories() {
+      // 返回唯一的分类列表
       return [...new Set(this.files.map(file => file.category))];
     },
     
     filteredFiles() {
+      // 根据选中分类和搜索关键词过滤文件
       return this.files.filter(file => {
         const categoryMatch = this.selectedCategory === 'all' || 
                              file.category === this.selectedCategory;
@@ -160,27 +162,32 @@ export default {
     },
     
     paginatedFiles() {
+      // 计算当前页要显示的文件
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
       return this.filteredFiles.slice(start, end);
     },
     
     totalPages() {
+      // 计算总页数
       return Math.ceil(this.filteredFiles.length / this.pageSize);
     }
   },
   methods: {
     filterImages() {
+      // 过滤图片时重置到第一页
       this.currentPage = 1;
     },
     
     openLightbox(file) {
-      this.currentFile = file; // Fixed: changed from currentImage to currentFile
+      // 显示预览弹窗并锁定背景滚动
+      this.currentFile = file;
       this.lightboxVisible = true;
       document.body.style.overflow = 'hidden';
     },
     
     closeLightbox() {
+      // 关闭预览弹窗并解锁背景滚动
       this.lightboxVisible = false;
       document.body.style.overflow = '';
     },
@@ -188,8 +195,8 @@ export default {
     // 新增：从API获取图片数据
     async fetchImages() {
       try {
-        this.loading = true;
-        const response = await apiService.getFiles();
+        this.loading = true; // 开始加载
+        const response = await apiService.getFiles(); // 获取文件数据
         // 处理文件数据，添加类型判断
         this.files = (response.data.results || response.data).map(file => {
           // 根据URL扩展名判断文件类型
@@ -200,19 +207,20 @@ export default {
             type: videoExtensions.includes(ext) ? 'video' : 'image'
           };
         });
-        this.error = null;
+        this.error = null; // 清除错误信息
       } catch (err) {
-        console.error('获取图片失败:', err);
+        console.error('获取图片失败:', err); // 输出错误日志
         // 显示详细错误信息
         this.error = `获取图片列表失败: ${err.response?.data?.detail || err.message}`;
-        this.images = [];
+        this.images = []; // 清空文件列表
       } finally {
-        this.loading = false;
+        this.loading = false; // 结束加载
       }
     }
   },
   watch: {
     currentPage() {
+      // 监听页码变化并平滑滚动到顶部
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   },
@@ -222,6 +230,9 @@ export default {
   }
 };
 </script>
+
+
+
 
 <style scoped>
 .image-gallery {
